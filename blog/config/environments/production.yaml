@@ -1,5 +1,5 @@
 site:
-  baseurl: https://example.com
+  baseurl: /lbliii
 build:
   parallel: true
   strict_mode: true
