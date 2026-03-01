@@ -1,0 +1,9 @@
+params:
+  email: hello@example.com
+  social:
+  - name: GitHub
+    url: https://github.com/yourusername
+  - name: Twitter
+    url: https://twitter.com/yourusername
+  - name: LinkedIn
+    url: https://linkedin.com/in/yourprofile

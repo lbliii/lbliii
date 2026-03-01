@@ -1,0 +1,10 @@
+content:
+  default_type: blog
+  excerpt_length: 750
+  excerpt_words: 150
+  reading_speed: 200
+  related_count: 5
+  sort_pages_by: date
+  sort_order: desc
+  toc_depth: 3
+  toc_min_headings: 2

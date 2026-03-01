@@ -1,0 +1,5 @@
+site:
+  title: blog
+  baseurl: https://example.com
+  description: blog - Built with Bengal
+  language: en
