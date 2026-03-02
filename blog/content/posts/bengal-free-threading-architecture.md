@@ -2,6 +2,11 @@
 type: blog
 title: Bengal SSG — Built for Python's Free-Threaded Future
 date: '2026-03-02'
+series:
+  id: nogil
+  name: "Free-Threading in the Bengal Ecosystem"
+  part: 1
+  total: 6
 tags:
 - bengal
 - python
@@ -154,5 +159,4 @@ Bengal is open source. Try it with a free-threaded build and see how it scales.
 ## Further reading
 
 - [Python experimental support for free threading](https://docs.python.org/3/howto/free-threading-python.html)
-- [py-free-threading examples](https://py-free-threading.github.io/examples/) — Bengal listed alongside other free-threading examples
 - [Bengal documentation](https://lbliii.github.io/bengal/)

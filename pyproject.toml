@@ -5,7 +5,7 @@ description = "LB's GitHub profile and blog"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "bengal[search]>=0.2.0",
+    "bengal[search]>=0.2.4",
 ]
 
 [tool.uv.sources]
