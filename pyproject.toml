@@ -7,3 +7,6 @@ requires-python = ">=3.14"
 dependencies = [
     "bengal[search]>=0.2.0",
 ]
+
+[tool.uv.sources]
+bengal = { path = "../bengal", editable = true }
