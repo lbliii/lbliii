@@ -1,0 +1,2 @@
+# Uses b-stack workspace .venv (see parent pyproject.toml)
+.venv/

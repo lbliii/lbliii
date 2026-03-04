@@ -1,6 +1,6 @@
 ---
 type: blog
-title: Rosettes — Immutable State Machines for Thread-Safe Syntax Highlighting
+title: "Rosettes — Immutable State Machines for Thread-Safe Syntax Highlighting"
 date: '2026-03-02'
 series:
   id: nogil
@@ -13,17 +13,26 @@ tags:
 - free-threading
 - syntax-highlighting
 - lexer
+- python-3.14
+- nogil
+- pygments-alternative
 category: technology
-description: How Rosettes achieves lock-free parallel highlighting with local variables only, frozen lookup tables, and O(n) ReDoS-proof lexers — techniques for the free-threading ecosystem
+description: "How Rosettes achieves lock-free parallel syntax highlighting with local-only state, frozen lookup tables, and O(n) hand-written lexers — 2.5x speedup on 4 cores"
 params:
   author: kida
 ---
 
-# Rosettes — Immutable State Machines for Thread-Safe Syntax Highlighting
+# Rosettes — Lock-Free Syntax Highlighting for Free-Threaded Python
 
-Syntax highlighters have two common problems: regex-based lexers that are vulnerable to ReDoS, and shared mutable state that causes races when multiple threads highlight code. Under free-threaded Python, that second problem becomes visible — threads can overwrite each other's lexer state, config, or token buffers.
+Rosettes is the simplest library in the Bengal stack, and that's the point. A syntax highlighter has one job: turn source code into colored tokens. The design space is small enough that you can get the threading model exactly right.
 
-Rosettes is a pure-Python syntax highlighter for Python 3.14t. Hand-written state machines, O(n) guaranteed, zero ReDoS risk.
+The rule is straightforward: **no mutable instance state during tokenization.** All lexer state lives in local variables. If your hot path uses only locals, you get thread-safety for free — no locks, no `ContextVar`, no copy-on-write. Just functions that take input and produce output.
+
+---
+
+:::{tip} Series context
+This is **Part 4 of 6** in *Free-Threading in the Bengal Ecosystem*. Rosettes is the syntax highlighting layer — used by [Patitas](/blog/posts/patitas-free-threading-markdown-parser/) for code blocks and [Bengal](/blog/posts/bengal-free-threading-architecture/) for build-time highlighting.
+:::
 
 ---
 
@@ -38,94 +47,98 @@ blocks = [
     ('def foo(): pass', 'python'),
     ('const x = 1;', 'javascript'),
     ('fn main() {}', 'rust'),
-] * 20  # 60 blocks
+] * 20
 
 results = highlight_many(blocks)
 print(f'Highlighted {len(results)} blocks')
 "
 ```
 
-For 8+ blocks, `highlight_many()` uses `ThreadPoolExecutor`. On Python 3.14t with free-threading, that gives real parallelism — 1.5–2x speedup for 50+ blocks. No locks. Each lexer uses only local variables.
+For 8+ blocks, `highlight_many()` uses `ThreadPoolExecutor`. On Python 3.14t, that's real parallelism.
 
 ---
 
-## 1. Local variables only — no instance state
+## Performance
 
-The critical rule: **no mutable instance state during tokenization.** Lexer state lives in local variables:
+:::{list-table} Parallel highlighting (100 blocks, free-threaded 3.14t)
+:header-rows: 1
 
+- - Workers
+  - Time
+  - Speedup
+- - 1 (sequential)
+  - 0.04 s
+  - 1.0x
+- - 2
+  - 0.02 s
+  - 1.6x
+- - 4
+  - 0.02 s
+  - 2.5x
+:::
+
+The batch threshold matters. For small batches, thread overhead dominates. Rosettes uses 8 blocks as the cutoff — below that, sequential is faster. Benchmarking showed 4 workers as the sweet spot for throughput.
+
+---
+
+## Local variables only — no instance state
+
+This is the core pattern. Lexer state lives in local variables, never in `self`:
+
+:::{tab-set}
+:::{tab-item} Wrong — instance state
 ```python
-# ❌ WRONG: Storing state in instance variables
-self.current_line = 1  # NOT thread-safe!
-
-# ✅ CORRECT: Use local variables
-line = 1
+def tokenize(self, code):
+    self.pos = 0          # Shared across threads!
+    self.line = 1         # Race condition
+    self.line_start = 0   # Data corruption
+    while self.pos < len(code):
+        ...
 ```
-
-The Python lexer main loop:
-
+:::
+:::{tab-item} Right — local variables
 ```python
 def tokenize(self, code, start=0, end=None):
-    pos = start
-    length = end if end is not None else len(code)
+    pos = start               # Local to this call
+    length = end or len(code)
     line = 1
     line_start = start
 
     while pos < length:
         char = code[pos]
         col = pos - line_start + 1
-
-        if char in self.WHITESPACE:
-            start = pos
-            start_line = line
-            while pos < length and code[pos] in self.WHITESPACE:
-                if code[pos] == "\n":
-                    line += 1
-                    line_start = pos + 1
-                pos += 1
-            yield Token(TokenType.WHITESPACE, code[start:pos], start_line, col)
-            continue
-        # ...
+        ...
 ```
+:::
+:::
 
-`pos`, `line`, `line_start` — all local. No `self.state`. Multiple threads can call `tokenize()` on the same lexer instance concurrently. No locks needed.
-
-**Learning:** If your hot path uses only locals, you get thread-safety for free. The lexer instance is effectively stateless during tokenization.
+`pos`, `line`, `line_start` — all local. Multiple threads can call `tokenize()` on the same lexer instance concurrently. The lexer instance is effectively stateless during tokenization.
 
 ---
 
-## 2. Frozen lookup tables
+## Frozen lookup tables
 
 Keyword and character-set lookups use `frozenset` — O(1) membership and immutable:
 
 ```python
-# Keyword and builtin lookup tables (frozen for thread safety)
 _KEYWORDS: frozenset[str] = frozenset(
     {"def", "class", "if", "else", "return", "match", "case", "type", ...}
 )
 
-# Base class character sets (frozen for thread safety)
 DIGITS: frozenset[str] = frozenset("0123456789")
-IDENT_START: frozenset[str] = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_")
+IDENT_START: frozenset[str] = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+)
 WHITESPACE: frozenset[str] = frozenset(" \t\n\r\f\v")
 ```
 
-In the tokenize loop: `if word in _KEYWORDS`, `if char in self.WHITESPACE`. No one can mutate these. Safe to share across threads.
-
-**Learning:** Use `frozenset` for read-only lookup tables. O(1) membership, immutable, thread-safe.
+In the tokenize loop: `if word in _KEYWORDS`, `if char in self.WHITESPACE`. Nobody can mutate these. Safe to share across threads without any protection.
 
 ---
 
-## 3. No regex — scan_while instead
+## No regex — scan_while instead
 
-Regex can backtrack catastrophically (ReDoS). Rosettes uses helper functions that advance position without backtracking:
-
-```python
-# ❌ WRONG: Using regex for matching
-match = re.match(r'\d+', code[pos:])  # ReDoS vulnerable!
-
-# ✅ CORRECT: Use scan_while helper
-end_pos = scan_while(code, pos, self.DIGITS)
-```
+Like [Patitas](/blog/posts/patitas-free-threading-markdown-parser/), Rosettes avoids regex in the hot path. The building block is `scan_while`:
 
 ```python
 def scan_while(code: str, pos: int, char_set: frozenset[str]) -> int:
@@ -136,37 +149,24 @@ def scan_while(code: str, pos: int, char_set: frozenset[str]) -> int:
     return pos
 ```
 
-Single pass. No backtracking. O(n) guaranteed. Tests run pathological inputs (nested parens, repeated escapes) with a 1s timeout and verify linear scaling — doubling input size should roughly double time, not explode.
+Single pass. No backtracking. O(n) guaranteed. Tests run pathological inputs (nested parens, repeated escapes) with a 1-second timeout to verify linear scaling.
 
-**Learning:** Hand-written scanners beat regex for security and predictability. `scan_while` / `scan_until` are the building blocks.
+:::{warning} ReDoS in syntax highlighters
+Syntax highlighters are often overlooked as a ReDoS vector. If your highlighter runs server-side on user-submitted code (documentation sites, paste services, code review tools), a regex-based lexer is an attack surface. Rosettes eliminates that by construction.
+:::
 
 ---
 
-## 4. Immutable tokens
+## Immutable everything else
 
-Tokens are `NamedTuple` — immutable, minimal memory, safe to share:
+Tokens, config, and formatters are all immutable:
 
 ```python
 class Token(NamedTuple):
-    """Immutable token — thread-safe, minimal memory."""
     type: TokenType
     value: str
     line: int = 1
     column: int = 1
-```
-
-No defensive copying when passing tokens between workers. The formatter receives tokens, formats them, returns a string. No shared mutable state.
-
----
-
-## 5. Frozen config and formatters
-
-Lexer config, highlight config, and formatters are frozen dataclasses:
-
-```python
-@dataclass(frozen=True, slots=True)
-class LexerConfig:
-    ...
 
 @dataclass(frozen=True, slots=True)
 class HighlightConfig:
@@ -175,56 +175,34 @@ class HighlightConfig:
 
 @dataclass(frozen=True, slots=True)
 class HtmlFormatter:
-    """Thread-safe: all state is immutable or local to method calls."""
+    config: FormatConfig = field(default_factory=FormatConfig)
+    ...
 ```
 
-Instances can be shared across threads. No one mutates them. Formatting uses only local state (e.g. a StringBuilder).
+No defensive copying when passing tokens between workers. The formatter receives tokens, formats them, returns a string. No shared mutable state at any layer.
 
 ---
 
-## 6. highlight_many() — parallel by default
-
-For 8+ blocks, Rosettes uses `ThreadPoolExecutor`:
+## highlight_many() — parallel by default
 
 ```python
-# For small batches, sequential is faster (thread overhead)
 if len(items_list) < 8:
     return [_highlight_one(it) for it in items_list]
 
-# Optimal worker count: 4 workers is sweet spot
 max_workers = min(4, os.cpu_count() or 4)
 with ThreadPoolExecutor(max_workers=max_workers) as executor:
     return list(executor.map(_highlight_one, items_list))
 ```
 
-Each worker calls `highlight()` (or `tokenize()` + `format()`). Lexers use locals only. Formatters are frozen. No contention. On 3.14t, real parallelism.
-
-**Learning:** Batch threshold matters. For small batches, thread overhead dominates. Rosettes uses 8 as the cutoff; benchmarking showed 4 workers as optimal.
-
----
-
-## 7. Declaring GIL independence (PEP 703)
-
-Rosettes explicitly declares that it doesn't rely on the GIL:
-
-```python
-def __getattr__(name: str) -> object:
-    if name == "_Py_mod_gil":
-        # Signal: this module is safe for free-threading
-        # 0 = Py_MOD_GIL_NOT_USED
-        return 0
-    raise AttributeError(...)
-```
-
-`_Py_mod_gil = 0` tells the runtime and ecosystem that this module is designed for free-threading.
+Each worker calls `highlight()`. Lexers use locals only. Formatters are frozen. On 3.14t, real parallelism. On GIL builds, it falls back gracefully — the code is correct either way, you just don't get the speedup.
 
 ---
 
 ## What this means in practice
 
-On free-threaded Python 3.14t, `highlight_many()` scales. 100 code blocks, 4 workers — ~2.5x speedup. No locks, no special API. The architecture — local variables only, frozen lookup tables, immutable tokens and config, no regex — makes parallelism drop-in.
+Rosettes is small — ~55 language lexers, pure Python, zero dependencies. The threading model is the simplest in the stack: use local variables for mutable state, `frozenset` for lookup tables, frozen dataclasses for config and output. No locks, no `ContextVar`, no copy-on-write. When the hot path is already stateless, thread-safety is free.
 
-Rosettes powers syntax highlighting in Patitas (Markdown) and Bengal. It's the highlighting layer in the Bengal ecosystem — a stack built for Python's free-threaded future.
+Rosettes powers syntax highlighting in [Patitas](/blog/posts/patitas-free-threading-markdown-parser/) (Markdown code blocks) and [Bengal](/blog/posts/bengal-free-threading-architecture/) (build-time highlighting for documentation sites).
 
 ---
 
@@ -232,3 +210,5 @@ Rosettes powers syntax highlighting in Patitas (Markdown) and Bengal. It's the h
 
 - [Python experimental support for free threading](https://docs.python.org/3/howto/free-threading-python.html)
 - [Rosettes documentation](https://lbliii.github.io/rosettes/)
+- [Rosettes source](https://github.com/lbliii/rosettes)
+- **Next in series:** [Pounce — Thread-Based ASGI Workers](/blog/posts/pounce-free-threading-asgi-server/)

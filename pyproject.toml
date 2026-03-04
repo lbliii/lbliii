@@ -1,9 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "lbliii"
 version = "0.1.0"
 description = "LB's GitHub profile and blog"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = [
-    "bengal[search]>=0.2.4",
-]
+dependencies = ["bengal[search]>=0.2.5"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["lbliii"]
