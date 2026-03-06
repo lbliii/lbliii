@@ -1,7 +1,7 @@
 ---
 type: blog
 title: A Blog
-description: Thoughts & Things
+description: delegated musings of a mad agentic director
 show_recent_posts: true
 blog_section: posts
 ---
