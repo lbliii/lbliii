@@ -89,43 +89,43 @@ Each type encodes a specific rendering strategy:
 :::{list-table} Chirp return types
 :header-rows: 1
 
-- - Type
+* - Type
   - Intent
   - Response
-- - `Template(name, **ctx)`
+* - `Template(name, **ctx)`
   - Full page
   - Rendered HTML, 200
-- - `Fragment(name, block, **ctx)`
+* - `Fragment(name, block, **ctx)`
   - Named block
   - Block HTML, 200
-- - `Page(name, block, **ctx)`
+* - `Page(name, block, **ctx)`
   - Full or fragment
   - Depends on `request.is_fragment`
-- - `Stream(name, **ctx)`
+* - `Stream(name, **ctx)`
   - Progressive render
   - Chunked HTML, awaitables resolved concurrently
-- - `Suspense(name, shell, blocks)`
+* - `Suspense(name, shell, blocks)`
   - Shell + deferred blocks
   - Instant first paint, OOB blocks fill in
-- - `EventStream(generator)`
+* - `EventStream(generator)`
   - Server-sent events
   - SSE response
-- - `OOB(main, *fragments)`
+* - `OOB(main, *fragments)`
   - Primary + out-of-band swaps
   - Main HTML + `hx-swap-oob` fragments
-- - `ValidationError(name, block, **ctx)`
+* - `ValidationError(name, block, **ctx)`
   - Form error
   - 422 + fragment + optional `HX-Retarget`
-- - `FormAction(redirect, fragments?)`
+* - `FormAction(redirect, fragments?)`
   - Post-submit
   - Fragments (htmx) or redirect (browser)
-- - `Action(trigger?, refresh?)`
+* - `Action(trigger?, refresh?)`
   - Side-effect only
   - Empty body + HX headers
-- - `str`
+* - `str`
   - Raw HTML
   - 200, text/html
-- - `dict` / `list`
+* - `dict` / `list`
   - JSON API
   - 200, application/json
 :::

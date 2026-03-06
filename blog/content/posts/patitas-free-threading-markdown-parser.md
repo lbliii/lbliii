@@ -65,15 +65,15 @@ No special API. No locks. Just `executor.map(parse, docs)`.
 :::{list-table} Parallel parsing (1,000 documents, free-threaded 3.14t)
 :header-rows: 1
 
-- - Threads
+* - Threads
   - Speedup
-- - 1
+* - 1
   - 1.0x (baseline)
-- - 2
+* - 2
   - ~2.0x
-- - 4
+* - 4
   - ~3.8x
-- - 8
+* - 8
   - ~6.6x
 :::
 

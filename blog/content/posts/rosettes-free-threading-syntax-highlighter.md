@@ -63,16 +63,16 @@ For 8+ blocks, `highlight_many()` uses `ThreadPoolExecutor`. On Python 3.14t, th
 :::{list-table} Parallel highlighting (100 blocks, free-threaded 3.14t)
 :header-rows: 1
 
-- - Workers
+* - Workers
   - Time
   - Speedup
-- - 1 (sequential)
+* - 1 (sequential)
   - 0.04 s
   - 1.0x
-- - 2
+* - 2
   - 0.02 s
   - 1.6x
-- - 4
+* - 4
   - 0.02 s
   - 2.5x
 :::

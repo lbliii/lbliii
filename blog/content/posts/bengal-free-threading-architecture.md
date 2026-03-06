@@ -82,19 +82,19 @@ Here's what parallel rendering looks like on real sites. These numbers come from
 :::{list-table} Parallel build scaling (1,000 pages)
 :header-rows: 1
 
-- - Workers
+* - Workers
   - Time
   - Speedup
-- - 1
+* - 1
   - ~9.0 s
   - 1.0x
-- - 2
+* - 2
   - ~5.0 s
   - 1.8x
-- - 4
+* - 4
   - ~3.0 s
   - 3.0x
-- - 8
+* - 8
   - ~2.5 s
   - 3.6x
 :::
@@ -102,13 +102,13 @@ Here's what parallel rendering looks like on real sites. These numbers come from
 :::{list-table} GIL vs free-threaded (1,000 pages, 4 workers)
 :header-rows: 1
 
-- - Build
+* - Build
   - Time
   - Notes
-- - Python 3.14 (GIL enabled)
+* - Python 3.14 (GIL enabled)
   - ~3.5 s
   - Threads serialized
-- - Python 3.14t (PYTHON_GIL=0)
+* - Python 3.14t (PYTHON_GIL=0)
   - ~2.0 s
   - 1.75x speedup, real parallelism
 :::

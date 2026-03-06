@@ -253,19 +253,19 @@ Chirp gives app developers three clear rules:
 :::{list-table} Chirp's threading model for app developers
 :header-rows: 1
 
-- - What kind of state?
+* - What kind of state?
   - Pattern
   - Example
-- - Per-request
+* - Per-request
   - `ContextVar`
   - `request`, `session`, `g`
-- - Per-worker async resource
+* - Per-worker async resource
   - `ContextVar` + `on_worker_startup`
   - httpx client, DB pool
-- - Shared mutable
+* - Shared mutable
   - `threading.Lock`
   - In-memory cache, counters
-- - Config / immutable
+* - Config / immutable
   - Frozen dataclass
   - `AppConfig`, routes, middleware
 :::

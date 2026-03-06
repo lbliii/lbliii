@@ -59,19 +59,19 @@ Kida's benchmark suite (`benchmarks/`) compares against Jinja2 across template c
 :::{list-table} Single-threaded rendering
 :header-rows: 1
 
-- - Template
+* - Template
   - Kida
   - Jinja2
   - Speedup
-- - Minimal (variable output)
+* - Minimal (variable output)
   - 8.25 µs
   - 11.97 µs
   - 1.45x
-- - Small (conditionals + loops)
+* - Small (conditionals + loops)
   - 17.03 µs
   - 27.69 µs
   - 1.63x
-- - Large (complex layout)
+* - Large (complex layout)
   - 1.91 ms
   - 4.09 ms
   - 2.14x
@@ -80,19 +80,19 @@ Kida's benchmark suite (`benchmarks/`) compares against Jinja2 across template c
 :::{list-table} Concurrent rendering (100 renders, free-threaded 3.14t)
 :header-rows: 1
 
-- - Workers
+* - Workers
   - Kida
   - Jinja2
   - Advantage
-- - 1
+* - 1
   - 1.80 ms
   - 1.80 ms
   - ~same
-- - 4
+* - 4
   - 1.62 ms
   - 1.90 ms
   - 1.17x
-- - 8
+* - 8
   - 1.76 ms
   - 1.97 ms
   - 1.12x

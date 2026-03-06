@@ -264,19 +264,19 @@ Patitas parses every markdown file across every docs site. Rosettes highlights e
 :::{list-table} Cross-layer validation
 :header-rows: 1
 
-- - Foundation
+* - Foundation
   - Consumers
   - Pages / Routes Exercised
-- - Kida
+* - Kida
   - Bengal, Chirp, Chirp UI
   - ~520 docs pages + 32 examples + production apps
-- - Patitas
+* - Patitas
   - Bengal
   - ~520 markdown files across 8 docs sites
-- - Rosettes
+* - Rosettes
   - Patitas → Bengal
   - Every fenced code block in every docs site
-- - Pounce
+* - Pounce
   - Bengal dev server, Chirp apps
   - All ASGI serving across the stack
 :::

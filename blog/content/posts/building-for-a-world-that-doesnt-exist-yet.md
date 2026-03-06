@@ -52,47 +52,47 @@ Here's a partial list of libraries that either lack free-threaded wheels, haven'
 :::{list-table} Libraries still not free-threading ready (March 2026)
 :header-rows: 1
 
-- - Library
+* - Library
   - What it does
   - Why it matters
   - Status
-- - **lxml**
+* - **lxml**
   - XML/HTML parsing
   - Used by scrapers, SOAP clients, document processing
   - 181-commit PR still open — not merged
-- - **grpcio**
+* - **grpcio**
   - gRPC client/server
   - Every microservice calling gRPC
   - No free-threaded support
-- - **OpenCV**
+* - **OpenCV**
   - Computer vision
   - Image processing, ML pipelines
   - No free-threaded support
-- - **polars**
+* - **polars**
   - DataFrames (Rust)
   - The "fast pandas" replacement
   - No free-threaded wheels
-- - **tree-sitter**
+* - **tree-sitter**
   - Incremental parsing
   - Syntax highlighting, code analysis, editor tooling
   - Re-enables GIL; open issue #111
-- - **tornado**
+* - **tornado**
   - Async networking
   - Jupyter's transport layer
   - No free-threaded support
-- - **spaCy**
+* - **spaCy**
   - NLP
   - Text processing, entity recognition
   - Waiting on blis, srsly, cymem chain
-- - **vLLM**
+* - **vLLM**
   - LLM serving
   - High-throughput inference
   - No free-threaded support
-- - **tokenizers**
+* - **tokenizers**
   - HuggingFace tokenization (Rust)
   - Every transformer pipeline
   - No free-threaded wheels listed
-- - **statsmodels**
+* - **statsmodels**
   - Statistical models
   - Time series, regression, hypothesis testing
   - No free-threaded support
@@ -145,22 +145,22 @@ Credit where it's due. The foundation work is real:
 :::{list-table} What's actually ready (March 2026)
 :header-rows: 1
 
-- - Layer
+* - Layer
   - Ready
   - Notes
-- - **Build tools**
+* - **Build tools**
   - Cython 3.1, PyO3 0.23+, pybind11 2.13+, nanobind 2.2+
   - You can *build* free-threaded extensions
-- - **Scientific core**
+* - **Scientific core**
   - NumPy 2.1, SciPy 1.15, pandas 2.2.3
   - Core math works; edge cases remain
-- - **ML frameworks**
+* - **ML frameworks**
   - PyTorch 2.6, JAX 0.5.1
   - Training and inference mostly work
-- - **Serialization**
+* - **Serialization**
   - msgspec 0.20, msgpack 1.1.2
   - Fast and thread-safe
-- - **Crypto**
+* - **Crypto**
   - cryptography 46.0, bcrypt 4.3, PyNaCl 1.6
   - Security stack is solid
 :::
